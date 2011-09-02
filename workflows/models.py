@@ -11,7 +11,8 @@ from permissions.models import Permission
 from permissions.models import Role
 
 class Workflow(models.Model):
-    """A workflow consists of a sequence of connected (through transitions)
+    """
+    A workflow consists of a sequence of connected (through transitions)
     states. It can be assigned to a model and / or model instances. If a
     model instance has a workflow it takes precendence over the model's
     workflow.
@@ -32,8 +33,8 @@ class Workflow(models.Model):
 
     initial_state
         The initial state the model / content gets if created.
-
     """
+    
     name = models.CharField(_(u"Name"), max_length=100, unique=True)
     initial_state = models.ForeignKey("State", verbose_name=_(u"Initial state"), related_name="workflow_state", blank=True, null=True)
     permissions = models.ManyToManyField(Permission, verbose_name=_(u"Permissions"), symmetrical=False, through="WorkflowPermissionRelation")
@@ -42,9 +43,11 @@ class Workflow(models.Model):
         return self.name
 
     def get_initial_state(self):
-        """Returns the initial state of the workflow. Takes the first one if
+        """
+        Returns the initial state of the workflow. Takes the first one if
         no state has been defined.
         """
+        
         if self.initial_state:
             return self.initial_state
         else:
@@ -54,9 +57,11 @@ class Workflow(models.Model):
                 return None
 
     def get_objects(self):
-        """Returns all objects which have this workflow assigned. Globally
+        """
+        Returns all objects which have this workflow assigned. Globally
         (via the object's content type) or locally (via the object itself).
         """
+        
         import workflows.utils
         objs = []
 
@@ -77,7 +82,8 @@ class Workflow(models.Model):
         return objs
 
     def set_to(self, ctype_or_obj):
-        """Sets the workflow to passed content type or object. See the specific
+        """
+        Sets the workflow to passed content type or object. See the specific
         methods for more information.
 
         **Parameters:**
@@ -85,6 +91,7 @@ class Workflow(models.Model):
         ctype_or_obj
             The content type or the object to which the workflow should be set.
             Can be either a ContentType instance or any Django model instance.
+            
         """
         if isinstance(ctype_or_obj, ContentType):
             return self.set_to_model(ctype_or_obj)
@@ -92,7 +99,8 @@ class Workflow(models.Model):
             return self.set_to_object(ctype_or_obj)
 
     def set_to_model(self, ctype):
-        """Sets the workflow to the passed content type. If the content
+        """
+        Sets the workflow to the passed content type. If the content
         type has already an assigned workflow the workflow is overwritten.
 
         **Parameters:**
@@ -101,6 +109,7 @@ class Workflow(models.Model):
             The content type which gets the workflow. Can be any Django model
             instance.
         """
+        
         try:
             wor = WorkflowModelRelation.objects.get(content_type=ctype)
         except WorkflowModelRelation.DoesNotExist:
@@ -110,7 +119,8 @@ class Workflow(models.Model):
             wor.save()
 
     def set_to_object(self, obj):
-        """Sets the workflow to the passed object.
+        """
+        Sets the workflow to the passed object.
 
         If the object has already the given workflow nothing happens. Otherwise
         the workflow is set to the objectthe state is set to the workflow's
@@ -121,6 +131,7 @@ class Workflow(models.Model):
         obj
             The object which gets the workflow.
         """
+        
         import workflows.utils
 
         ctype = ContentType.objects.get_for_model(obj)
@@ -136,7 +147,8 @@ class Workflow(models.Model):
                 workflows.utils.set_state(self.initial_state)
 
 class State(models.Model):
-    """A certain state within workflow.
+    """
+    A certain state within workflow.
 
     **Attributes:**
 
@@ -148,8 +160,8 @@ class State(models.Model):
 
     transitions
         The transitions of a workflow state.
-
     """
+    
     name = models.CharField(_(u"Name"), max_length=100)
     workflow = models.ForeignKey(Workflow, verbose_name=_(u"Workflow"), related_name="states")
     transitions = models.ManyToManyField("Transition", verbose_name=_(u"Transitions"), blank=True, null=True, related_name="states")
@@ -161,13 +173,15 @@ class State(models.Model):
         return "%s (%s)" % (self.name, self.workflow.name)
 
     def get_allowed_transitions(self, obj, user):
-        """Returns all allowed transitions for passed object and user.
         """
+        Returns all allowed transitions for passed object and user.
+        """
+        
         transitions = []
         for transition in self.transitions.all():
             permission = transition.permission
             if permission is None:
-               transitions.append(transition)
+                transitions.append(transition)
             else:
                 # First we try to get the objects specific has_permission
                 # method (in case the object inherits from the PermissionBase
@@ -181,7 +195,8 @@ class State(models.Model):
         return transitions
 
 class Transition(models.Model):
-    """A transition from a source to a destination state. The transition can
+    """
+    A transition from a source to a destination state. The transition can
     be used from several source states.
 
     **Attributes:**
@@ -204,8 +219,8 @@ class Transition(models.Model):
     permission
         The necessary permission to process the transition. Must be a
         Permission instance.
-
     """
+    
     name = models.CharField(_(u"Name"), max_length=100)
     workflow = models.ForeignKey(Workflow, verbose_name=_(u"Workflow"), related_name="transitions")
     destination = models.ForeignKey(State, verbose_name=_(u"Destination"), null=True, blank=True, related_name="destination_state")
@@ -216,7 +231,8 @@ class Transition(models.Model):
         return self.name
 
 class StateObjectRelation(models.Model):
-    """Stores the workflow state of an object.
+    """
+    Stores the workflow state of an object.
 
     Provides a way to give any object a workflow state without changing the
     object's model.
@@ -230,6 +246,7 @@ class StateObjectRelation(models.Model):
     state
         The state of content. This must be a State instance.
     """
+    
     content_type = models.ForeignKey(ContentType, verbose_name=_(u"Content type"), related_name="state_object", blank=True, null=True)
     content_id = models.PositiveIntegerField(_(u"Content id"), blank=True, null=True)
     content = generic.GenericForeignKey(ct_field="content_type", fk_field="content_id")
@@ -242,7 +259,8 @@ class StateObjectRelation(models.Model):
         unique_together = ("content_type", "content_id", "state")
 
 class WorkflowObjectRelation(models.Model):
-    """Stores an workflow of an object.
+    """
+    Stores an workflow of an object.
 
     Provides a way to give any object a workflow without changing the object's
     model.
@@ -257,6 +275,7 @@ class WorkflowObjectRelation(models.Model):
         The workflow which is assigned to an object. This needs to be a workflow
         instance.
     """
+    
     content_type = models.ForeignKey(ContentType, verbose_name=_(u"Content type"), related_name="workflow_object", blank=True, null=True)
     content_id = models.PositiveIntegerField(_(u"Content id"), blank=True, null=True)
     content = generic.GenericForeignKey(ct_field="content_type", fk_field="content_id")
@@ -269,7 +288,8 @@ class WorkflowObjectRelation(models.Model):
         return "%s %s - %s" % (self.content_type.name, self.content_id, self.workflow.name)
 
 class WorkflowModelRelation(models.Model):
-    """Stores an workflow for a model (ContentType).
+    """
+    Stores an workflow for a model (ContentType).
 
     Provides a way to give any object a workflow without changing the model.
 
@@ -283,6 +303,7 @@ class WorkflowModelRelation(models.Model):
         The workflow which is assigned to an object. This needs to be a
         workflow instance.
     """
+    
     content_type = models.ForeignKey(ContentType, verbose_name=_(u"Content Type"), unique=True)
     workflow = models.ForeignKey(Workflow, verbose_name=_(u"Workflow"), related_name="wmrs")
 
@@ -292,7 +313,8 @@ class WorkflowModelRelation(models.Model):
 # Permissions relation #######################################################
 
 class WorkflowPermissionRelation(models.Model):
-    """Stores the permissions for which a workflow is responsible.
+    """
+    Stores the permissions for which a workflow is responsible.
 
     **Attributes:**
 
@@ -304,6 +326,7 @@ class WorkflowPermissionRelation(models.Model):
         The permission for which the workflow is responsible. Needs to be a
         Permission instance.
     """
+    
     workflow = models.ForeignKey(Workflow)
     permission = models.ForeignKey(Permission, related_name="permissions")
 
@@ -314,7 +337,8 @@ class WorkflowPermissionRelation(models.Model):
         return "%s %s" % (self.workflow.name, self.permission.name)
 
 class StateInheritanceBlock(models.Model):
-    """Stores inheritance block for state and permission.
+    """
+    Stores inheritance block for state and permission.
 
     **Attributes:**
 
@@ -326,6 +350,7 @@ class StateInheritanceBlock(models.Model):
         The permission for which the instance is blocked. Needs to be a
         Permission instance.
     """
+    
     state = models.ForeignKey(State, verbose_name=_(u"State"))
     permission = models.ForeignKey(Permission, verbose_name=_(u"Permission"))
 
@@ -333,7 +358,8 @@ class StateInheritanceBlock(models.Model):
         return "%s %s" % (self.state.name, self.permission.name)
 
 class StatePermissionRelation(models.Model):
-    """Stores granted permission for state and role.
+    """
+    Stores granted permission for state and role.
 
     **Attributes:**
 
@@ -349,6 +375,7 @@ class StatePermissionRelation(models.Model):
         The role for which the state has the permission. Needs to be a lfc
         Role instance.
     """
+    
     state = models.ForeignKey(State, verbose_name=_(u"State"))
     permission = models.ForeignKey(Permission, verbose_name=_(u"Permission"))
     role = models.ForeignKey(Role, verbose_name=_(u"Role"))

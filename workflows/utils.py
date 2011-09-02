@@ -17,7 +17,8 @@ from workflows.models import WorkflowPermissionRelation
 import permissions.utils
 
 def get_objects_for_workflow(workflow):
-    """Returns all objects which have passed workflow.
+    """
+    Returns all objects which have passed workflow.
 
     **Parameters:**
 
@@ -25,6 +26,7 @@ def get_objects_for_workflow(workflow):
         The workflow for which the objects are returned. Can be a Workflow
         instance or a string with the workflow name.
     """
+    
     if not isinstance(workflow, Workflow):
         try:
             workflow = Workflow.objects.get(name=workflow)
@@ -34,7 +36,8 @@ def get_objects_for_workflow(workflow):
     return workflow.get_objects()
 
 def remove_workflow(ctype_or_obj):
-    """Removes the workflow from the passed content type or object. After this
+    """
+    Removes the workflow from the passed content type or object. After this
     function has been called the content type or object has no workflow
     anymore.
 
@@ -50,13 +53,15 @@ def remove_workflow(ctype_or_obj):
         set. Can be either a ContentType instance or any LFC Django model
         instance.
     """
+    
     if isinstance(ctype_or_obj, ContentType):
         remove_workflow_from_model(ctype_or_obj)
     else:
         remove_workflow_from_object(ctype_or_obj)
 
 def remove_workflow_from_model(ctype):
-    """Removes the workflow from passed content type. After this function has
+    """
+    Removes the workflow from passed content type. After this function has
     been called the content type has no workflow anymore (the instances might
     have own ones).
 
@@ -64,6 +69,7 @@ def remove_workflow_from_model(ctype):
         The content type from which the passed workflow should be removed.
         Must be a ContentType instance.
     """
+    
     # First delete all states, inheritance blocks and permissions from ctype's
     # instances which have passed workflow.
     workflow = get_workflow_for_model(ctype)
@@ -91,7 +97,8 @@ def remove_workflow_from_model(ctype):
         wmr.delete()
 
 def remove_workflow_from_object(obj):
-    """Removes the workflow from the passed object. After this function has
+    """
+    Removes the workflow from the passed object. After this function has
     been called the object has no *own* workflow anymore (it might have one
     via its content type).
 
@@ -99,6 +106,7 @@ def remove_workflow_from_object(obj):
         The object from which the passed workflow should be set. Must be a
         Django Model instance.
     """
+    
     try:
         wor = WorkflowObjectRelation.objects.get(content_type=obj)
     except WorkflowObjectRelation.DoesNotExist:
@@ -113,7 +121,8 @@ def remove_workflow_from_object(obj):
     set_initial_state(obj)
 
 def set_workflow(ctype_or_obj, workflow):
-    """Sets the workflow for passed content type or object. See the specific
+    """
+    Sets the workflow for passed content type or object. See the specific
     methods for more information.
 
     **Parameters:**
@@ -126,10 +135,12 @@ def set_workflow(ctype_or_obj, workflow):
         set. Can be either a ContentType instance or any Django model
         instance.
     """
+    
     return workflow.set_to(ctype_or_obj)
 
 def set_workflow_for_object(obj, workflow):
-    """Sets the passed workflow to the passed object.
+    """
+    Sets the passed workflow to the passed object.
 
     If the object has already the given workflow nothing happens. Otherwise
     the object gets the passed workflow and the state is set to the workflow's
@@ -144,6 +155,7 @@ def set_workflow_for_object(obj, workflow):
     obj
         The object which gets the passed workflow.
     """
+    
     if isinstance(workflow, Workflow) == False:
         try:
             workflow = Workflow.objects.get(name=workflow)
@@ -153,7 +165,8 @@ def set_workflow_for_object(obj, workflow):
     workflow.set_to_object(obj)
 
 def set_workflow_for_model(ctype, workflow):
-    """Sets the passed workflow to the passed content type. If the content
+    """
+    Sets the passed workflow to the passed content type. If the content
     type has already an assigned workflow the workflow is overwritten.
 
     The objects which had the old workflow must updated explicitely.
@@ -168,6 +181,7 @@ def set_workflow_for_model(ctype, workflow):
         The content type to which the passed workflow should be assigned. Can
         be any Django model instance
     """
+    
     if isinstance(workflow, Workflow) == False:
         try:
             workflow = Workflow.objects.get(name=workflow)
@@ -177,7 +191,8 @@ def set_workflow_for_model(ctype, workflow):
     workflow.set_to_model(ctype)
 
 def get_workflow(obj):
-    """Returns the workflow for the passed object. It takes it either from
+    """
+    Returns the workflow for the passed object. It takes it either from
     the passed object or - if the object doesn't have a workflow - from the
     passed object's ContentType.
 
@@ -187,6 +202,7 @@ def get_workflow(obj):
         The object for which the workflow should be returend. Can be any
         Django model instance.
     """
+    
     workflow = get_workflow_for_object(obj)
     if workflow is not None:
         return workflow
@@ -195,7 +211,8 @@ def get_workflow(obj):
     return get_workflow_for_model(ctype)
 
 def get_workflow_for_object(obj):
-    """Returns the workflow for the passed object.
+    """
+    Returns the workflow for the passed object.
 
     **Parameters:**
 
@@ -212,7 +229,8 @@ def get_workflow_for_object(obj):
         return wor.workflow
 
 def get_workflow_for_model(ctype):
-    """Returns the workflow for the passed model.
+    """
+    Returns the workflow for the passed model.
 
     **Parameters:**
 
@@ -228,7 +246,8 @@ def get_workflow_for_model(ctype):
         return wor.workflow
 
 def get_state(obj):
-    """Returns the current workflow state for the passed object.
+    """
+    Returns the current workflow state for the passed object.
 
     **Parameters:**
 
@@ -236,6 +255,7 @@ def get_state(obj):
         The object for which the workflow state should be returned. Can be any
         Django model instance.
     """
+    
     ctype = ContentType.objects.get_for_model(obj)
     try:
         sor = StateObjectRelation.objects.get(content_type=ctype, content_id=obj.id)
@@ -245,7 +265,8 @@ def get_state(obj):
         return sor.state
 
 def set_state(obj, state):
-    """Sets the state for the passed object to the passed state and updates
+    """
+    Sets the state for the passed object to the passed state and updates
     the permissions for the object.
 
     **Parameters:**
@@ -257,6 +278,7 @@ def set_state(obj, state):
     state
         The state which should be set to the passed object.
     """
+    
     ctype = ContentType.objects.get_for_model(obj)
     try:
         sor = StateObjectRelation.objects.get(content_type=ctype, content_id=obj.id)
@@ -268,14 +290,17 @@ def set_state(obj, state):
     update_permissions(obj)
 
 def set_initial_state(obj):
-    """Sets the initial state to the passed object.
     """
+    Sets the initial state to the passed object.
+    """
+    
     wf = get_workflow(obj)
     if wf is not None:
         set_state(obj, wf.get_initial_state())
 
 def get_allowed_transitions(obj, user):
-    """Returns all allowed transitions for passed object and user. Takes the
+    """
+    Returns all allowed transitions for passed object and user. Takes the
     current state of the object into account.
 
     **Parameters:**
@@ -286,6 +311,7 @@ def get_allowed_transitions(obj, user):
     user
         The user for which the transitions are allowed.
     """
+    
     state = get_state(obj)
     if state is None:
         return []
@@ -293,8 +319,10 @@ def get_allowed_transitions(obj, user):
     return state.get_allowed_transitions(obj, user)
 
 def do_transition(obj, transition, user):
-    """Processes the passed transition to the passed object (if allowed).
     """
+    Processes the passed transition to the passed object (if allowed).
+    """
+    
     if not isinstance(transition, Transition):
         try:
             transition = Transition.objects.get(name=transition)
@@ -309,9 +337,11 @@ def do_transition(obj, transition, user):
         return False
 
 def update_permissions(obj):
-    """Updates the permissions of the passed object according to the object's
+    """
+    Updates the permissions of the passed object according to the object's
     current workflow state.
     """
+    
     workflow = get_workflow(obj)
     state = get_state(obj)
 
